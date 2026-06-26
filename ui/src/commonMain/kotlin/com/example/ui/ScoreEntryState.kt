@@ -69,6 +69,14 @@ class ScoreEntryState(
     fun pointsFor(rule: ScoringRule, player: PlayerInput = activePlayer): Int =
         Scorer.score(rule, player, ctx)
 
+    /** Active player's points summed per section group, in group order (footer breakdown). */
+    fun categoryBreakdown(): List<Pair<String?, Int>> {
+        val b = breakdown
+        return template.groupedRules().map { (title, rules) ->
+            title to rules.sumOf { b[it.id] ?: 0 }
+        }
+    }
+
     /**
      * The screen as ordered sections (from the model's `group` metadata, §10). A group that
      * contains any TABLE-scoped rule becomes a [Section.Ranked] rendered across all players;
