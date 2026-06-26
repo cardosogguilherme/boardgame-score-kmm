@@ -2,14 +2,15 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.androidLibrary)
 }
 
 kotlin {
     jvmToolchain(21)
 
+    androidTarget()
     jvm()
-    // Android + iOS targets are deferred (no Android SDK / no macOS on this host).
-    // All Screen A code lives in commonMain, so wiring those targets later is additive.
+    // iOS targets deferred (no macOS on this host). All Screen A code lives in commonMain.
 
     sourceSets {
         commonMain.dependencies {
@@ -22,5 +23,17 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+    }
+}
+
+android {
+    namespace = "com.example.ui"
+    compileSdk = libs.versions.androidCompileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.androidMinSdk.get().toInt()
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }

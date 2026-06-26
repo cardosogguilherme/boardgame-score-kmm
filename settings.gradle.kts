@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "boardgame-score-kmm"
 
-include(":deepsea-scoring", ":ui")
+include(":deepsea-scoring", ":ui", ":androidApp")
