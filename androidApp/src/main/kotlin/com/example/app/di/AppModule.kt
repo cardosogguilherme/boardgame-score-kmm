@@ -15,7 +15,9 @@ import com.example.scoring.interactors.SaveTemplate
 import com.example.scoring.interactors.UpdatePlayerValue
 import com.example.scoring.repository.GameRepository
 import com.example.scoring.repository.TemplateRepository
+import com.example.app.viewmodel.LibraryViewModel
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**
@@ -52,5 +54,6 @@ val appModule = module {
     factory { UpdatePlayerValue(get()) }
     factory { FinishGame(get()) }
 
-    // ViewModels are wired in Task 10
+    // ViewModels
+    viewModel { LibraryViewModel(get(), get()) }
 }
