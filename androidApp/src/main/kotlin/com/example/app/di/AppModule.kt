@@ -1,5 +1,21 @@
 package com.example.app.di
 
+import androidx.room.Room
+import com.example.data.AppDatabase
+import com.example.data.repository.RoomGameRepository
+import com.example.data.repository.RoomTemplateRepository
+import com.example.scoring.interactors.CreateGame
+import com.example.scoring.interactors.DeleteTemplate
+import com.example.scoring.interactors.FinishGame
+import com.example.scoring.interactors.GetGame
+import com.example.scoring.interactors.GetTemplate
+import com.example.scoring.interactors.ObserveGames
+import com.example.scoring.interactors.ObserveTemplates
+import com.example.scoring.interactors.SaveTemplate
+import com.example.scoring.interactors.UpdatePlayerValue
+import com.example.scoring.repository.GameRepository
+import com.example.scoring.repository.TemplateRepository
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 /**
@@ -13,4 +29,28 @@ import org.koin.dsl.module
  * domain interactors, and the screen ViewModels (Task 10).
  */
 val appModule = module {
+    // Database — one instance for the whole app lifetime
+    single {
+        Room.databaseBuilder(androidContext(), AppDatabase::class.java, "boardgame-score.db")
+            .build()
+    }
+
+    // Repositories — bound as their domain interfaces so screens stay framework-free
+    single<TemplateRepository> { RoomTemplateRepository(get<AppDatabase>().templateDao()) }
+    single<GameRepository> { RoomGameRepository(get<AppDatabase>().gameDao()) }
+
+    // Template interactors
+    factory { ObserveTemplates(get()) }
+    factory { GetTemplate(get()) }
+    factory { SaveTemplate(get()) }
+    factory { DeleteTemplate(get()) }
+
+    // Game interactors
+    factory { ObserveGames(get()) }
+    factory { GetGame(get()) }
+    factory { CreateGame(get()) }
+    factory { UpdatePlayerValue(get()) }
+    factory { FinishGame(get()) }
+
+    // ViewModels are wired in Task 10
 }
