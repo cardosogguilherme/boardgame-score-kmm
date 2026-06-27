@@ -35,7 +35,14 @@ android {
 
 dependencies {
     implementation(project(":ui"))
+    implementation(project(":deepsea-scoring"))
     implementation(libs.androidx.activity.compose)
     implementation(compose.runtime)
     implementation(compose.material3)
+
+    // Koin is the app's DI framework. Unlike Hilt it needs no compiler plugin and its module DSL
+    // is plain Kotlin, so wiring can migrate to commonMain for an iOS target later. The KMM
+    // domain (:deepsea-scoring) and :ui commonMain stay framework-free and are wired here.
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
 }
