@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class TemplateEntity(
     @PrimaryKey val id: String,
     val name: String,
+    val scenariosJson: String = "[]",
 )
 
 @Entity(tableName = "field")
