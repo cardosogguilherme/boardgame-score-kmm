@@ -24,6 +24,12 @@ interface TemplateDao {
     @Query("SELECT * FROM rule WHERE templateId = :id ORDER BY position")
     suspend fun rules(id: String): List<RuleEntity>
 
+    @Query("SELECT * FROM field ORDER BY position")
+    fun observeAllFields(): Flow<List<FieldEntity>>
+
+    @Query("SELECT * FROM rule ORDER BY position")
+    fun observeAllRules(): Flow<List<RuleEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertTemplate(template: TemplateEntity)
 
@@ -47,5 +53,10 @@ interface TemplateDao {
         upsertTemplate(template)
         clearFields(template.id); upsertFields(fields)
         clearRules(template.id); upsertRules(rules)
+    }
+
+    @Transaction
+    suspend fun deleteTemplateCascade(id: String) {
+        clearFields(id); clearRules(id); deleteTemplate(id)
     }
 }

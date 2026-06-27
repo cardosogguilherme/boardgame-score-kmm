@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.example.data.entity.GameEntity
 import com.example.data.entity.PlayerEntity
 import com.example.data.entity.PlayerValueEntity
@@ -22,6 +23,12 @@ interface GameDao {
 
     @Query("SELECT * FROM player_value WHERE gameId = :id")
     suspend fun values(id: String): List<PlayerValueEntity>
+
+    @Query("SELECT * FROM player ORDER BY position")
+    fun observeAllPlayers(): Flow<List<PlayerEntity>>
+
+    @Query("SELECT * FROM player_value")
+    fun observeAllValues(): Flow<List<PlayerValueEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertGame(game: GameEntity)
@@ -43,4 +50,21 @@ interface GameDao {
 
     @Query("DELETE FROM game WHERE id = :id")
     suspend fun deleteGame(id: String)
+
+    @Transaction
+    suspend fun insertGame(
+        game: GameEntity,
+        players: List<PlayerEntity>,
+        values: List<PlayerValueEntity>,
+    ) {
+        upsertGame(game)
+        upsertPlayers(players)
+        values.forEach { upsertValue(it) }
+    }
+
+    @Transaction
+    suspend fun addPlayerAtEnd(gameId: String, playerId: String, name: String) {
+        val position = players(gameId).size
+        upsertPlayer(PlayerEntity(playerId, gameId, name, position))
+    }
 }

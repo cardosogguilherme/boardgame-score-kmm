@@ -1,7 +1,6 @@
 package com.example.data.repository
 
 import com.example.data.dao.GameDao
-import com.example.data.entity.PlayerEntity
 import com.example.data.entity.PlayerValueEntity
 import com.example.data.mapper.gameFrom
 import com.example.data.mapper.toEntities
@@ -13,15 +12,25 @@ import com.example.scoring.model.PlayerId
 import com.example.scoring.model.PlayerInput
 import com.example.scoring.repository.GameRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 
 class RoomGameRepository(
     private val dao: GameDao,
     private val now: () -> Long = System::currentTimeMillis,
 ) : GameRepository {
     override fun observeGames(): Flow<List<Game>> =
-        dao.observeGames().map { rows ->
-            rows.map { gameFrom(it, dao.players(it.id), dao.values(it.id)) }
+        combine(
+            dao.observeGames(),
+            dao.observeAllPlayers(),
+            dao.observeAllValues(),
+        ) { games, players, values ->
+            games.map { g ->
+                gameFrom(
+                    g,
+                    players.filter { it.gameId == g.id },
+                    values.filter { it.gameId == g.id },
+                )
+            }
         }
 
     override suspend fun getGame(id: GameId): Game? {
@@ -31,8 +40,7 @@ class RoomGameRepository(
 
     override suspend fun createGame(game: Game): GameId {
         val (g, players, values) = game.toEntities(now())
-        dao.upsertGame(g); dao.upsertPlayers(players)
-        values.forEach { dao.upsertValue(it) }
+        dao.insertGame(g, players, values)
         return game.id
     }
 
@@ -41,8 +49,7 @@ class RoomGameRepository(
     }
 
     override suspend fun addPlayer(id: GameId, player: PlayerInput) {
-        val position = dao.players(id.raw).size
-        dao.upsertPlayer(PlayerEntity(player.id.raw, id.raw, player.name, position))
+        dao.addPlayerAtEnd(id.raw, player.id.raw, player.name)
     }
 
     override suspend fun removePlayer(id: GameId, player: PlayerId) {

@@ -6,12 +6,22 @@ import com.example.data.mapper.toEntities
 import com.example.scoring.model.Template
 import com.example.scoring.repository.TemplateRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 
 class RoomTemplateRepository(private val dao: TemplateDao) : TemplateRepository {
     override fun observeTemplates(): Flow<List<Template>> =
-        dao.observeTemplates().map { rows ->
-            rows.map { templateFrom(it, dao.fields(it.id), dao.rules(it.id)) }
+        combine(
+            dao.observeTemplates(),
+            dao.observeAllFields(),
+            dao.observeAllRules(),
+        ) { templates, fields, rules ->
+            templates.map { t ->
+                templateFrom(
+                    t,
+                    fields.filter { it.templateId == t.id },
+                    rules.filter { it.templateId == t.id },
+                )
+            }
         }
 
     override suspend fun getTemplate(id: String): Template? {
@@ -25,6 +35,6 @@ class RoomTemplateRepository(private val dao: TemplateDao) : TemplateRepository 
     }
 
     override suspend fun deleteTemplate(id: String) {
-        dao.clearFields(id); dao.clearRules(id); dao.deleteTemplate(id)
+        dao.deleteTemplateCascade(id)
     }
 }
