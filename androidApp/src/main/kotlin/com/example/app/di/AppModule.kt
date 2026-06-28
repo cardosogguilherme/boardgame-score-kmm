@@ -16,6 +16,7 @@ import com.example.scoring.interactors.UpdatePlayerValue
 import com.example.scoring.repository.GameRepository
 import com.example.scoring.repository.TemplateRepository
 import com.example.app.viewmodel.LibraryViewModel
+import com.example.app.viewmodel.NewGameViewModel
 import com.example.app.viewmodel.RuleBuilderViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
@@ -58,4 +59,5 @@ val appModule = module {
     // ViewModels
     viewModel { LibraryViewModel(get(), get()) }
     viewModel { (templateId: String?) -> RuleBuilderViewModel(get(), get(), templateId) }
+    viewModel { NewGameViewModel(get(), get()) }
 }
