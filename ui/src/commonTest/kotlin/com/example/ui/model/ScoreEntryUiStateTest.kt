@@ -1,22 +1,21 @@
-package com.example.ui
+package com.example.ui.model
 
 import com.example.scoring.model.PlayerId
 import com.example.scoring.model.PlayerInput
 import com.example.scoring.model.RuleId
 import com.example.scoring.model.resolve
 import com.example.scoring.sample.DeepSea
-import com.example.ui.model.Section
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /**
- * UI-layer acceptance test: drives the §5 fixture through the Screen A state holder (not the
- * domain test) and proves the running total reads 83 and the ranked goal resolves 8/8/0.
+ * Regression anchor for the PURE reducer: the Deep Sea §5 fixture must total 83 with the ranked
+ * goal awarding 8/8/0, and the sections must follow the group metadata order. Mirrors the fixture
+ * used by [com.example.ui.ScoreEntryStateTest] so both the holder and the reducer prove the anchor.
  */
-class ScoreEntryStateTest {
+class ScoreEntryUiStateTest {
 
-    private fun fixtureState(): ScoreEntryState {
+    private fun fixture(): ScoreEntryUiState {
         val resolved = DeepSea.template.resolve(DeepSea.SCENARIO_1)
         val you = PlayerInput(
             PlayerId("you"), "You",
@@ -35,17 +34,17 @@ class ScoreEntryStateTest {
         )
         val mira = PlayerInput(PlayerId("mira"), "Mira", mapOf(DeepSea.discsPlaced to 12))
         val kane = PlayerInput(PlayerId("kane"), "Kane", mapOf(DeepSea.discsPlaced to 8))
-        return ScoreEntryState(resolved, listOf(you, mira, kane), activePlayerId = PlayerId("you"))
+        return scoreEntryUiState(resolved, listOf(you, mira, kane), PlayerId("you"))
     }
 
     @Test
-    fun running_total_reads_83() {
-        assertEquals(83, fixtureState().total)
+    fun reducer_total_reads_83() {
+        assertEquals(83, fixture().total)
     }
 
     @Test
-    fun ranked_goal_section_resolves_8_8_0() {
-        val ranked = fixtureState().sections().filterIsInstance<Section.Ranked>().single()
+    fun ranked_goal_awards_8_8_0() {
+        val ranked = fixture().sections.filterIsInstance<Section.Ranked>().single()
         val byName = ranked.rows.associateBy { it.player.name }
         assertEquals(8, byName.getValue("You").points.getValue(RuleId("goal")))
         assertEquals(8, byName.getValue("Mira").points.getValue(RuleId("goal")))
@@ -53,30 +52,10 @@ class ScoreEntryStateTest {
     }
 
     @Test
-    fun stepping_a_field_updates_the_live_total() {
-        val state = fixtureState()
-        val before = state.total
-        state.increment(DeepSea.journal) // journal is a FLAT rule: +1 point
-        assertEquals(before + 1, state.total)
-        state.decrement(DeepSea.journal)
-        assertEquals(before, state.total)
-    }
-
-    @Test
-    fun steppers_clamp_at_zero() {
-        val state = fixtureState()
-        repeat(50) { state.decrement(DeepSea.ingenuity) }
-        assertEquals(0, state.valueOf(PlayerId("you"), DeepSea.ingenuity))
-    }
-
-    @Test
     fun sections_follow_group_metadata_in_order() {
-        val titles = fixtureState().sections().map { it.title }
         assertEquals(
             listOf("Attributes", "Impact Board", "Journal & Specialist", "Leftover Research", "Ranked Goal"),
-            titles,
+            fixture().sections.map { it.title },
         )
-        // The ranked-goal group is the cross-player section.
-        assertTrue(fixtureState().sections().last() is Section.Ranked)
     }
 }

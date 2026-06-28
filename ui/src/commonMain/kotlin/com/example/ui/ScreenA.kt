@@ -26,20 +26,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.scoring.model.FieldId
 import com.example.scoring.model.PlayerId
+import com.example.ui.model.PlayerChip
+import com.example.ui.model.RankedColumn
+import com.example.ui.model.RuleRow
+import com.example.ui.model.ScoreEntryUiState
+import com.example.ui.model.Section
 
 /**
- * Screen A — Score entry. Driven entirely by a [ScoreEntryState] (a `ResolvedTemplate` plus the
- * whole player table). Each rule renders as a row: label · stepper · live points · rule-type tag.
+ * Screen A — Score entry. Stateless: driven entirely by a [ScoreEntryUiState] snapshot and a set of
+ * intent callbacks. Each rule renders as a row: label · stepper · live points · rule-type tag.
  * Numeric input is steppers only — never a text field (brief §7). The ranked-goal section spans
- * all players and resolves rank live.
+ * all players and resolves rank live. Edits flow out via [onIncrement]/[onDecrement]; the caller
+ * (holder or ViewModel) owns clamping + recomputation and feeds back a fresh state.
  */
 @Composable
 fun ScoreEntryScreen(
-    state: ScoreEntryState,
-    title: String = "Score entry",
+    state: ScoreEntryUiState,
+    onSelectPlayer: (PlayerId) -> Unit,
+    onIncrement: (FieldId, PlayerId) -> Unit,
+    onDecrement: (FieldId, PlayerId) -> Unit,
+    title: String = state.title,
     modifier: Modifier = Modifier,
 ) {
+    // Per-player rows edit the active player's sheet; the active id comes from the chips.
+    val activeId = state.players.firstOrNull { it.isActive }?.id ?: state.players.firstOrNull()?.id
+
     Column(modifier.fillMaxSize().padding(16.dp)) {
         Text(
             text = title,
@@ -48,18 +61,15 @@ fun ScoreEntryScreen(
         )
         Spacer(Modifier.size(12.dp))
 
-        PlayerSelector(
-            players = state.players.map { it.id to it.name },
-            activeId = state.activePlayerId,
-            onSelect = { state.activePlayerId = it },
-        )
+        PlayerSelector(players = state.players, onSelect = onSelectPlayer)
         Spacer(Modifier.size(12.dp))
 
         LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(state.sections()) { section ->
+            items(state.sections) { section ->
                 when (section) {
-                    is Section.PerPlayer -> PerPlayerSection(section, state)
-                    is Section.Ranked -> RankedSection(section, state)
+                    is Section.PerPlayer ->
+                        PerPlayerSection(section, activeId, onIncrement, onDecrement)
+                    is Section.Ranked -> RankedSection(section, onIncrement, onDecrement)
                 }
             }
         }
@@ -70,11 +80,16 @@ fun ScoreEntryScreen(
 }
 
 @Composable
-private fun PerPlayerSection(section: Section.PerPlayer, state: ScoreEntryState) {
+private fun PerPlayerSection(
+    section: Section.PerPlayer,
+    activeId: PlayerId?,
+    onIncrement: (FieldId, PlayerId) -> Unit,
+    onDecrement: (FieldId, PlayerId) -> Unit,
+) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             SectionHeader(section.title)
-            section.rows.forEach { row ->
+            section.rows.forEach { row: RuleRow ->
                 Row(
                     Modifier.fillMaxWidth().padding(vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -86,8 +101,14 @@ private fun PerPlayerSection(section: Section.PerPlayer, state: ScoreEntryState)
                     Spacer(Modifier.size(8.dp))
                     Stepper(
                         value = row.value,
-                        onDecrement = { row.field?.let { state.decrement(it) } },
-                        onIncrement = { row.field?.let { state.increment(it) } },
+                        onDecrement = {
+                            val f = row.field; val p = activeId
+                            if (f != null && p != null) onDecrement(f, p)
+                        },
+                        onIncrement = {
+                            val f = row.field; val p = activeId
+                            if (f != null && p != null) onIncrement(f, p)
+                        },
                     )
                     Spacer(Modifier.size(8.dp))
                     PointsLabel(row.points)
@@ -98,12 +119,16 @@ private fun PerPlayerSection(section: Section.PerPlayer, state: ScoreEntryState)
 }
 
 @Composable
-private fun RankedSection(section: Section.Ranked, state: ScoreEntryState) {
+private fun RankedSection(
+    section: Section.Ranked,
+    onIncrement: (FieldId, PlayerId) -> Unit,
+    onDecrement: (FieldId, PlayerId) -> Unit,
+) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SectionHeader(section.title, Modifier.weight(1f))
-                section.columns.forEach { RuleTypeTag(it.tag) }
+                section.columns.forEach { col: RankedColumn -> RuleTypeTag(col.tag) }
             }
             Text(
                 "Table-scoped: rank resolves across all players (${section.fieldLabel}).",
@@ -124,8 +149,8 @@ private fun RankedSection(section: Section.Ranked, state: ScoreEntryState) {
                     )
                     Stepper(
                         value = row.value,
-                        onDecrement = { section.field?.let { state.decrement(it, playerId = row.player.id) } },
-                        onIncrement = { section.field?.let { state.increment(it, playerId = row.player.id) } },
+                        onDecrement = { section.field?.let { onDecrement(it, row.player.id) } },
+                        onIncrement = { section.field?.let { onIncrement(it, row.player.id) } },
                     )
                     Spacer(Modifier.size(8.dp))
                     // Points from each rule in this group (e.g. rank award + per-disc bonus).
@@ -139,7 +164,7 @@ private fun RankedSection(section: Section.Ranked, state: ScoreEntryState) {
 }
 
 @Composable
-private fun ScoreFooter(state: ScoreEntryState) {
+private fun ScoreFooter(state: ScoreEntryUiState) {
     Column {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Total", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
@@ -150,7 +175,7 @@ private fun ScoreFooter(state: ScoreEntryState) {
             )
         }
         Spacer(Modifier.size(6.dp))
-        state.categoryBreakdown().forEach { (title, subtotal) ->
+        state.categoryBreakdown.forEach { (title, subtotal) ->
             Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
                 Text(
                     title ?: "Other",
@@ -166,20 +191,18 @@ private fun ScoreFooter(state: ScoreEntryState) {
 
 @Composable
 private fun PlayerSelector(
-    players: List<Pair<PlayerId, String>>,
-    activeId: PlayerId,
+    players: List<PlayerChip>,
     onSelect: (PlayerId) -> Unit,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        players.forEach { (id, name) ->
-            val active = id == activeId
+        players.forEach { chip ->
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.clickable { onSelect(id) },
+                color = if (chip.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.clickable { onSelect(chip.id) },
             ) {
                 Text(
-                    name,
+                    chip.name,
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                 )

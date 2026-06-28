@@ -42,7 +42,14 @@ fun DeepSeaScreenA(modifier: Modifier = Modifier) {
     val state = remember { deepSeaSampleState() }
     MaterialTheme {
         Surface {
-            ScoreEntryScreen(state = state, title = DeepSea.template.name, modifier = modifier)
+            ScoreEntryScreen(
+                state = state.uiStateNow(),
+                onSelectPlayer = { state.activePlayerId = it },
+                onIncrement = { f, p -> state.increment(f, playerId = p) },
+                onDecrement = { f, p -> state.decrement(f, playerId = p) },
+                title = DeepSea.template.name,
+                modifier = modifier,
+            )
         }
     }
 }

@@ -18,6 +18,8 @@ import com.example.scoring.repository.TemplateRepository
 import com.example.app.viewmodel.LibraryViewModel
 import com.example.app.viewmodel.NewGameViewModel
 import com.example.app.viewmodel.RuleBuilderViewModel
+import com.example.app.viewmodel.ScoreEntryViewModel
+import com.example.scoring.model.GameId
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -60,4 +62,5 @@ val appModule = module {
     viewModel { LibraryViewModel(get(), get()) }
     viewModel { (templateId: String?) -> RuleBuilderViewModel(get(), get(), templateId) }
     viewModel { NewGameViewModel(get(), get()) }
+    viewModel { (gameId: GameId) -> ScoreEntryViewModel(gameId, get(), get(), get(), get()) }
 }
