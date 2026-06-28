@@ -5,9 +5,6 @@ scoring template (fields + typed scoring rules), start a game, add players, and 
 per-category breakdowns and cross-player ranked goals. Today it ships an Android app; the shared core
 is structured for an iOS target (see [the iOS plan](docs/superpowers/plans/2026-06-28-ios-xcode-target.md)).
 
-The engine's first game and end-to-end fixture is **Endeavor: Deep Sea** — a golden regression anchor
-that must always total **83** with the ranked goal resolving **8 / 8 / 0** across players.
-
 ## Features
 
 - **Rule builder** — author a template: name it, add fields (`COUNT` / `TRACK` / `RANKING`), and add any
