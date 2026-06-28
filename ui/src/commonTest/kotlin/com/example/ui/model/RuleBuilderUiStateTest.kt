@@ -108,4 +108,12 @@ class RuleBuilderUiStateTest {
         // no rules added
         assertFalse(ruleBuilderUiState(draft).canSave)
     }
+
+    // ── B1 empty-fields gap: name only, no fields → canSave == false ──
+
+    @Test fun canSave_false_when_no_fields() {
+        val draft = emptyTemplateDraft("x").renamed("T")
+        // no fields, no rules
+        assertFalse(ruleBuilderUiState(draft).canSave)
+    }
 }

@@ -14,7 +14,7 @@ import com.example.scoring.model.resolve
 // ── Palette ──────────────────────────────────────────────────────────────────────────────────
 
 enum class RuleTypeOption(val label: String, val hint: String) {
-    LOOKUP("Lookup", "use when a track value maps to points via a table"),
+    LOOKUP("Lookup", "a field value maps to points via a lookup table"),
     PER_UNIT("Per Unit", "use when each unit of a resource scores a fixed amount"),
     FLAT("Flat", "use when the field value scores directly"),
     PER_N("Per N", "use when you earn 1 point per N units"),
@@ -78,12 +78,28 @@ data class RuleParams(
     val group: String? = null,
 )
 
+// ── Collision-safe id generators ──────────────────────────────────────────────────────────────
+
+/** Returns the smallest N≥1 such that "field-N" is not already in [existingIds]. */
+private fun nextFieldId(existingIds: Set<String>): FieldId {
+    var n = 1
+    while ("field-$n" in existingIds) n++
+    return FieldId("field-$n")
+}
+
+/** Returns the smallest N≥1 such that "rule-N" is not already in [existingIds]. */
+private fun nextRuleId(existingIds: Set<String>): RuleId {
+    var n = 1
+    while ("rule-$n" in existingIds) n++
+    return RuleId("rule-$n")
+}
+
 // ── Pure edit helpers (return new Template; never mutate) ─────────────────────────────────────
 
 fun Template.renamed(name: String): Template = copy(name = name)
 
 fun Template.withFieldAdded(label: String, kind: FieldKind, max: Int?): Template {
-    val newId = FieldId("field-${fields.size + 1}")
+    val newId = nextFieldId(fields.map { it.id.raw }.toSet())
     return copy(fields = fields + Field(id = newId, label = label, kind = kind, max = max))
 }
 
@@ -98,7 +114,7 @@ fun Template.withRuleAdded(
     fieldId: FieldId,
     params: RuleParams,
 ): Template {
-    val newId = RuleId("rule-${rules.size + 1}")
+    val newId = nextRuleId(rules.map { it.id.raw }.toSet())
     val rule: ScoringRule = when (type) {
         RuleTypeOption.LOOKUP -> ScoringRule.Lookup(newId, fieldId, params.table, params.group)
         RuleTypeOption.PER_UNIT -> ScoringRule.PerUnit(newId, fieldId, params.points, params.group)
