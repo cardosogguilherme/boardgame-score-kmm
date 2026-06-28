@@ -20,6 +20,8 @@ import com.example.ui.model.TemplateRow
 @Composable
 fun LibraryScreen(
     state: LibraryUiState,
+    // Host-driven: the library route wires this to the Home "+" FAB, so the list body itself never
+    // invokes it. Kept in the signature so the screen is the single contract for the route.
     onNewTemplate: () -> Unit,
     onOpenTemplate: (String) -> Unit,
     onResumeGame: (String) -> Unit,

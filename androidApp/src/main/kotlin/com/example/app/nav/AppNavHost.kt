@@ -186,7 +186,6 @@ fun AppNavHost() {
                     onSelectPlayer = vm::onSelectPlayer,
                     onIncrement = vm::onIncrement,
                     onDecrement = vm::onDecrement,
-                    title = state.title,
                     modifier = Modifier.padding(innerPadding),
                 )
             }

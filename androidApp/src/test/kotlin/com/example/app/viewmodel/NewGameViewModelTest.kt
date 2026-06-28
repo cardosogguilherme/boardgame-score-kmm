@@ -130,4 +130,20 @@ class NewGameViewModelTest {
         val stateAfterReselect = vm.uiState.first { it.selectedTemplateId == DeepSea.template.id && it.selectedScenarioId == null }
         assertNull(stateAfterReselect.selectedScenarioId, "Scenario selection must be reset when a new template is selected")
     }
+
+    // ── (e) added player gets a default non-blank name so Start unlocks without naming ──────────
+
+    @Test
+    fun added_player_gets_default_name_and_unlocks_start() = runTest {
+        val (vm) = buildVm()
+        vm.uiState.first { it.templates.isNotEmpty() }
+
+        vm.onSelectTemplate(DeepSea.template.id)
+        vm.onGameNameChange("Friday")
+        vm.onAddPlayer()
+
+        val state = vm.uiState.first { it.players.isNotEmpty() }
+        assertEquals("Player 1", state.players.single().name, "A new player should get a default non-blank name")
+        assertTrue(state.canStart, "Start must unlock without the user editing the player name")
+    }
 }

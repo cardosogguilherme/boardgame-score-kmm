@@ -19,7 +19,6 @@ import com.example.ui.model.withRuleRemoved
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -33,9 +32,9 @@ import kotlin.random.Random
  *   existing template is loaded from [getTemplate] in an init coroutine.
  * - Edit callbacks apply the pure helpers from `:ui` to the draft and re-emit via [uiState].
  * - [save] validates + persists via [saveTemplate]; invokes [onSaved] only when there are no
- *   errors. Validation errors are surfaced through [saveErrors] (the mapper already reflects them
- *   in [uiState].errors and [uiState].canSave, so the screen can gate the Save button without
- *   checking [saveErrors] directly).
+ *   errors. Validation errors already surface live through [uiState].errors / [uiState].canSave
+ *   (the mapper re-runs the same validate()), so the screen gates the Save button on canSave and
+ *   [save] simply does not navigate when the draft is invalid.
  */
 class RuleBuilderViewModel(
     private val getTemplate: GetTemplate,
@@ -50,9 +49,6 @@ class RuleBuilderViewModel(
     // Captured once at construction; used to detect whether the draft is still pristine (no user
     // edits and no prior load) before overwriting with the fetched template.
     private val emptyDraftId = _draft.value.id
-
-    private val _saveErrors = MutableStateFlow<List<String>>(emptyList())
-    val saveErrors: StateFlow<List<String>> = _saveErrors.asStateFlow()
 
     val uiState: StateFlow<RuleBuilderUiState> = _draft
         .map { ruleBuilderUiState(it) }
@@ -98,8 +94,11 @@ class RuleBuilderViewModel(
 
     fun save(onSaved: () -> Unit) {
         viewModelScope.launch {
-            val errors = saveTemplate(_draft.value)
-            if (errors.isEmpty()) onSaved() else _saveErrors.value = errors
+            // SaveTemplate validates and only persists when valid, returning any errors. We navigate
+            // only on success; on an invalid draft we do nothing — the screen already shows the live
+            // errors via uiState and keeps the Save button disabled (canSave), so this is unreachable
+            // in practice but stays correct if a caller ever bypasses the gate.
+            if (saveTemplate(_draft.value).isEmpty()) onSaved()
         }
     }
 }

@@ -91,7 +91,11 @@ class NewGameViewModel(
 
     fun onAddPlayer() {
         val n = ++playerIdCounter
-        _selection.update { it.copy(players = it.players + PlayerDraftUi("p-$n", "")) }
+        // Default to a non-blank "Player N" (by position) so Start unlocks immediately once a
+        // template + game name are set; the name is editable. tempId uses the monotonic counter.
+        _selection.update {
+            it.copy(players = it.players + PlayerDraftUi("p-$n", "Player ${it.players.size + 1}"))
+        }
     }
 
     fun onPlayerNameChange(tempId: String, name: String) {
