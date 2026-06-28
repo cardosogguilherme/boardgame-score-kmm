@@ -47,6 +47,10 @@ class RuleBuilderViewModel(
         emptyTemplateDraft("tpl-${Random.nextInt(Int.MAX_VALUE)}"),
     )
 
+    // Captured once at construction; used to detect whether the draft is still pristine (no user
+    // edits and no prior load) before overwriting with the fetched template.
+    private val emptyDraftId = _draft.value.id
+
     private val _saveErrors = MutableStateFlow<List<String>>(emptyList())
     val saveErrors: StateFlow<List<String>> = _saveErrors.asStateFlow()
 
@@ -61,7 +65,9 @@ class RuleBuilderViewModel(
     init {
         if (templateId != null) {
             viewModelScope.launch {
-                getTemplate(templateId)?.let { _draft.value = it }
+                getTemplate(templateId)?.let { loaded ->
+                    _draft.update { current -> if (current.id == emptyDraftId) loaded else current }
+                }
             }
         }
     }
