@@ -8,10 +8,15 @@ androidMinSdk = "24"
 androidTargetSdk = "35"
 activityCompose = "1.9.3"
 coroutines = "1.9.0"
-room = "2.6.1"
+room = "2.7.1"
+sqlite = "2.5.1"
 ksp = "2.1.0-1.0.29"
 navigationCompose = "2.8.4"
 lifecycleViewmodelCompose = "2.8.7"
+# JetBrains Compose-Multiplatform variants (used by the shared module / iOS). Versions track
+# Compose MP 1.7.x: lifecycle 2.8.4, navigation-compose 2.8.0-alpha10.
+lifecycleMultiplatform = "2.8.4"
+navigationComposeMultiplatform = "2.8.0-alpha10"
 robolectric = "4.14.1"
 androidxTestCore = "1.6.1"
 koin = "4.0.0"
@@ -26,6 +31,9 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
+# Room KMP needs an explicit SQLite driver; the bundled driver ships native SQLite for all targets
+# (Android + iOS), so the same data layer works everywhere.
+androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleViewmodelCompose" }
@@ -37,6 +45,17 @@ koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
 koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
+# Multiplatform Koin for Compose: koin-compose (KoinApplication/koinInject) + koin-compose-viewmodel
+# (the MP koinViewModel()), so AppNavHost can live in commonMain instead of :androidApp.
+koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
+koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
+
+# Compose-Multiplatform lifecycle + navigation (JetBrains artifacts), used by the shared module so
+# ViewModels/viewModelScope and the NavHost compile for iOS as well as Android.
+androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycleMultiplatform" }
+androidx-lifecycle-viewmodel-compose-mp = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleMultiplatform" }
+androidx-lifecycle-runtime-compose-mp = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleMultiplatform" }
+androidx-navigation-compose-mp = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationComposeMultiplatform" }
 
 [plugins]
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
