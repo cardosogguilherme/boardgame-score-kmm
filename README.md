@@ -2,8 +2,11 @@
 
 A Kotlin Multiplatform app for scoring board games from **author-defined rule templates**. Build a
 scoring template (fields + typed scoring rules), start a game, add players, and enter scores with live
-per-category breakdowns and cross-player ranked goals. Today it ships an Android app; the shared core
-is structured for an iOS target (see [the iOS plan](docs/superpowers/plans/2026-06-28-ios-xcode-target.md)).
+per-category breakdowns and cross-player ranked goals. It ships an Android app, and the **entire app**
+— domain, Room data layer, ViewModels, navigation, and Compose UI — is now multiplatform: an `iosApp`
+Xcode host renders the same shared `App()` on iPhone. iOS compilation/linking is **macOS-only**, so the
+iOS targets are authored and the Android build is fully verified on this (Windows) host; see
+[`iosApp/README.md`](iosApp/README.md) and [the iOS plan](docs/superpowers/plans/2026-06-28-ios-xcode-target.md).
 
 ## Features
 
@@ -23,14 +26,17 @@ A hybrid clean architecture with **anti-corruption layers** — distinct models 
 every boundary — and **MVVM with interactors** (use cases).
 
 ```
-:deepsea-scoring  (commonMain)   DOMAIN — pure Kotlin: models, scoring engine (dumb-data rules +
+:deepsea-scoring  (KMP)          DOMAIN — pure Kotlin: models, scoring engine (dumb-data rules +
                                  external interpreters), repository interfaces, interactors
-:data             (Android lib)  DATA  — Room entities/DAOs/DB + entity↔domain mappers +
-                                 Room-backed repository implementations
-:ui               (commonMain)   PRESENTATION — Compose Multiplatform: immutable UiState models +
+:data             (KMP)          DATA  — one shared Room 2.7 (KMP) layer: entities/DAOs/DB +
+                                 entity↔domain mappers + repo impls; bundled SQLite driver, with
+                                 platform DB builders (Android Context / iOS Documents dir)
+:ui               (KMP)          PRESENTATION — Compose Multiplatform: immutable UiState models +
                                  domain→UI mappers/reducers + stateless screens
-:androidApp       (Android host) ViewModels (StateFlow<UiState>), Navigation-Compose, Koin DI,
-                                 edge-to-edge MainActivity
+:shared           (KMP)          APP — ViewModels (StateFlow<UiState>), AppNavHost (MP Navigation),
+                                 the Koin graph (shared + expect/actual platform module), App()
+:androidApp       (Android host) thin: MainActivity (setContent { App() }) + ScoreApp (initKoin)
+iosApp            (Xcode/SwiftUI)thin: wraps MainViewController() → ComposeUIViewController { App() }
 ```
 
 Data flow: `Composable → callback → ViewModel → Interactor → Repository (interface) → Room impl`, and
@@ -46,8 +52,9 @@ back as `Room Flow → domain model → ViewModel maps to UiState → StateFlow 
 
 ## Tech stack
 
-Kotlin 2.1.0 · AGP 8.7.3 · Gradle 8.14 · Compose Multiplatform 1.7.3 · Room 2.6.1 + KSP ·
-Navigation-Compose · Koin 4.0 · kotlinx-coroutines / serialization · compileSdk 35 / minSdk 24.
+Kotlin 2.1.0 · AGP 8.7.3 · Gradle 8.14 · Compose Multiplatform 1.7.3 · Room 2.7 KMP + KSP +
+bundled SQLite · JetBrains MP Navigation/Lifecycle · Koin 4.0 (koin-compose-viewmodel) ·
+kotlinx-coroutines / serialization · compileSdk 35 / minSdk 24 · iOS targets (macOS to build).
 
 ## Building
 
@@ -72,7 +79,12 @@ Every layer ships focused tests. The **Deep Sea §5 fixture** anchors scoring co
 layers (domain engine, the score-entry reducer, and the score-entry state holder): **total 83**,
 **ranked goal 8 / 8 / 0**. Treat any change to those numbers as a regression.
 
-## Roadmap
+## iOS
 
-- **iOS / Xcode** — a full Compose-Multiplatform app on iPhone with Room KMP persistence. Sequenced plan
-  (macOS-gated build) in [`docs/superpowers/plans/2026-06-28-ios-xcode-target.md`](docs/superpowers/plans/2026-06-28-ios-xcode-target.md).
+The full Compose-Multiplatform app on iPhone is **scaffolded**: iOS targets on every module, one
+shared Room 2.7 KMP data layer (bundled SQLite, `expect/actual` DB builders), the ViewModels + NavHost
++ Koin graph in `:shared`, a `MainViewController()` Compose entry point, and an `iosApp` Xcode project
+that embeds the `Shared` framework. Because Kotlin/Native + Xcode are **macOS-only**, these pieces are
+authored but **must be compiled/run on a Mac** (or a macOS CI runner) — the Android app and all JVM
+tests are verified on this host. Build steps: [`iosApp/README.md`](iosApp/README.md). Sequenced plan
+(I1–I5): [`docs/superpowers/plans/2026-06-28-ios-xcode-target.md`](docs/superpowers/plans/2026-06-28-ios-xcode-target.md).
