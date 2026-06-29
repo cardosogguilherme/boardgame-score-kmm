@@ -3,38 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Board Game Score — KMM architecture &amp; classes</title>
+<title>Board Game Score — Kotlin Multiplatform project guide</title>
+<script>
+  // Set the theme before first paint to avoid a flash. Order: saved choice → system preference → dark.
+  (function () {
+    try {
+      var saved = localStorage.getItem("bgs-theme");
+      var sys = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", saved || sys);
+    } catch (e) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  })();
+</script>
 <style>
+  /* ---- Dark theme (default) ---- */
   :root{
+    color-scheme: dark;
+    --grad-top:#0b0e13; --grad-bot:#0e1116;
     --bg:#0e1116; --panel:#161b22; --panel2:#1c232d; --line:#2a3441;
     --ink:#e6edf3; --dim:#9aa7b4; --faint:#6b7785;
-    --domain:#5cc8a6; --ui:#7aa2f7; --app:#e0af68; --accent:#bb9af7;
-    --warn:#f7768e; --mono:"SFMono-Regular",ui-monospace,"Cascadia Code",Consolas,monospace;
+    --nav-bg:rgba(14,17,22,.86);
+    --domain:#5cc8a6; --data:#56b6c2; --ui:#7aa2f7; --app:#e0af68; --accent:#bb9af7; --warn:#f7768e;
+    --code-bg:#1c232d; --code-ink:#cdd9e5;
+    --mono:"SFMono-Regular",ui-monospace,"Cascadia Code",Consolas,monospace;
+  }
+  /* ---- Light theme ---- */
+  :root[data-theme="light"]{
+    color-scheme: light;
+    --grad-top:#eef2f6; --grad-bot:#f6f8fa;
+    --bg:#f6f8fa; --panel:#ffffff; --panel2:#eef1f4; --line:#d6dde4;
+    --ink:#1f2328; --dim:#57606a; --faint:#8c959f;
+    --nav-bg:rgba(246,248,250,.86);
+    --domain:#1a7f64; --data:#1f7d8c; --ui:#3b5bdb; --app:#b1731f; --accent:#7c4dff; --warn:#d12d4b;
+    --code-bg:#eef1f4; --code-ink:#1f2328;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:linear-gradient(180deg,#0b0e13,#0e1116 220px);color:var(--ink);
-    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-  .wrap{max-width:1060px;margin:0 auto;padding:40px 24px 80px}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:linear-gradient(180deg,var(--grad-top),var(--bg) 220px);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    transition:background .25s ease,color .25s ease}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
   header h1{font-size:30px;margin:0 0 6px;letter-spacing:-.4px}
-  header p{color:var(--dim);margin:0;max-width:70ch}
+  header p{color:var(--dim);margin:0;max-width:74ch}
   .pill{display:inline-block;font:600 11px/1 var(--mono);padding:5px 9px;border-radius:999px;
     border:1px solid var(--line);color:var(--dim);margin:14px 6px 0 0;background:var(--panel)}
-  nav{position:sticky;top:0;background:rgba(14,17,22,.86);backdrop-filter:blur(8px);
+  nav{position:sticky;top:0;background:var(--nav-bg);backdrop-filter:blur(8px);
     border-bottom:1px solid var(--line);margin:26px -24px 0;padding:10px 24px;z-index:5}
-  nav a{color:var(--dim);text-decoration:none;font-size:13px;margin-right:18px;white-space:nowrap}
+  nav a{color:var(--dim);text-decoration:none;font-size:13px;margin-right:16px;white-space:nowrap}
   nav a:hover{color:var(--ink)}
   h2{font-size:21px;margin:46px 0 8px;letter-spacing:-.2px}
   h2 .k{font:600 12px/1 var(--mono);color:var(--faint);margin-left:8px}
   h3{font-size:15px;margin:26px 0 6px;color:var(--ink)}
-  p.lead{color:var(--dim);margin:.2em 0 1em;max-width:78ch}
-  code{font-family:var(--mono);font-size:.88em;background:var(--panel2);padding:1px 5px;border-radius:5px;color:#cdd9e5}
+  p.lead{color:var(--dim);margin:.2em 0 1em;max-width:80ch}
+  code{font-family:var(--mono);font-size:.88em;background:var(--code-bg);padding:1px 5px;border-radius:5px;color:var(--code-ink)}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:14px 0}
   .grid{display:grid;gap:14px}
   @media(min-width:720px){.grid.c2{grid-template-columns:1fr 1fr}.grid.c3{grid-template-columns:1fr 1fr 1fr}}
   .tag{display:inline-block;font:600 10px/1 var(--mono);padding:4px 7px;border-radius:6px;letter-spacing:.4px}
-  .t-domain{background:rgba(92,200,166,.14);color:var(--domain);border:1px solid rgba(92,200,166,.4)}
-  .t-ui{background:rgba(122,162,247,.14);color:var(--ui);border:1px solid rgba(122,162,247,.4)}
-  .t-app{background:rgba(224,175,104,.14);color:var(--app);border:1px solid rgba(224,175,104,.4)}
+  .t-domain{background:color-mix(in srgb,var(--domain) 16%,transparent);color:var(--domain);border:1px solid color-mix(in srgb,var(--domain) 45%,transparent)}
+  .t-data{background:color-mix(in srgb,var(--data) 16%,transparent);color:var(--data);border:1px solid color-mix(in srgb,var(--data) 45%,transparent)}
+  .t-ui{background:color-mix(in srgb,var(--ui) 16%,transparent);color:var(--ui);border:1px solid color-mix(in srgb,var(--ui) 45%,transparent)}
+  .t-app{background:color-mix(in srgb,var(--app) 16%,transparent);color:var(--app);border:1px solid color-mix(in srgb,var(--app) 45%,transparent)}
+  .t-shared{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent)}
   table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
   th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
   th{color:var(--faint);font:600 11px/1 var(--mono);letter-spacing:.4px;text-transform:uppercase}
@@ -43,79 +74,140 @@
   .mono{font-family:var(--mono)}
   ul.tight{margin:.3em 0 .6em;padding-left:1.1em}
   ul.tight li{margin:.18em 0}
-  .note{border-left:3px solid var(--accent);background:rgba(187,154,247,.07);padding:10px 14px;border-radius:0 8px 8px 0;color:var(--dim);margin:14px 0}
-  .warn{border-left-color:var(--warn);background:rgba(247,118,142,.07)}
+  .note{border-left:3px solid var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);padding:10px 14px;border-radius:0 8px 8px 0;color:var(--dim);margin:14px 0}
+  .warn{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,transparent)}
+  .ok{border-left-color:var(--domain);background:color-mix(in srgb,var(--domain) 8%,transparent)}
   .flow{font-family:var(--mono);font-size:12.5px;color:var(--dim);line-height:1.9}
   .flow b{color:var(--ink)}
-  /* diagram */
   .diagram{display:flex;flex-direction:column;align-items:center;gap:0;margin:8px 0 4px}
-  .mod{width:min(560px,100%);border-radius:12px;padding:14px 18px;border:1px solid var(--line);background:var(--panel)}
-  .mod .h{display:flex;align-items:center;gap:10px;font-weight:700}
+  .mod{width:min(620px,100%);border-radius:12px;padding:13px 18px;border:1px solid var(--line);background:var(--panel)}
+  .mod .h{display:flex;align-items:center;gap:10px;font-weight:700;flex-wrap:wrap}
   .mod .sub{color:var(--faint);font:12px/1.5 var(--mono);margin-top:6px}
-  .mod.app{border-color:rgba(224,175,104,.5)}
-  .mod.ui{border-color:rgba(122,162,247,.5)}
-  .mod.dom{border-color:rgba(92,200,166,.5)}
-  .arrow{color:var(--faint);font:12px/1 var(--mono);padding:7px 0;text-align:center}
+  .mod.app{border-color:color-mix(in srgb,var(--app) 50%,transparent)}
+  .mod.shared{border-color:color-mix(in srgb,var(--accent) 50%,transparent)}
+  .mod.ui{border-color:color-mix(in srgb,var(--ui) 50%,transparent)}
+  .mod.data{border-color:color-mix(in srgb,var(--data) 50%,transparent)}
+  .mod.dom{border-color:color-mix(in srgb,var(--domain) 50%,transparent)}
+  .arrow{color:var(--faint);font:12px/1 var(--mono);padding:6px 0;text-align:center}
   .arrow span{color:var(--dim)}
   .legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--dim);font-size:12.5px;margin-top:10px}
   .dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:middle}
   footer{margin-top:60px;color:var(--faint);font-size:12.5px;border-top:1px solid var(--line);padding-top:18px}
   .kbd{font:600 11px/1 var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:3px 6px;color:var(--dim)}
+  /* theme toggle */
+  .theme-toggle{position:fixed;top:14px;right:16px;z-index:20;display:inline-flex;align-items:center;gap:7px;
+    background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:999px;
+    padding:7px 13px;font:600 12px/1 var(--mono);cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.18);
+    transition:background .2s,border-color .2s,transform .1s}
+  .theme-toggle:hover{border-color:var(--accent)}
+  .theme-toggle:active{transform:scale(.96)}
+  .theme-toggle .ico{font-size:14px;line-height:1}
+  :root[data-theme="light"] .theme-toggle .moon,
+  :root[data-theme="dark"] .theme-toggle .sun{display:none}
 </style>
 </head>
 <body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle light/dark theme" title="Toggle theme">
+  <span class="ico sun">☀️</span><span class="ico moon">🌙</span>
+  <span class="lbl">Theme</span>
+</button>
+
 <div class="wrap">
 
 <header>
-  <h1>Board Game Score — KMM architecture &amp; classes</h1>
-  <p>A Kotlin Multiplatform project that renders a board-game scoring form from data. The scoring
-     engine is pure Kotlin; the UI is Compose Multiplatform; the Android app is a thin host. This
-     page explains how the modules are wired and what every class does.</p>
+  <h1>Board Game Score — Kotlin Multiplatform project guide</h1>
+  <p>A Kotlin Multiplatform app for scoring board games from <b>author-defined rule templates</b>: build a
+     template (fields + typed scoring rules), start a game, add players, and enter scores with a live total,
+     per-category breakdowns, and cross-player ranked goals. The scoring engine is pure Kotlin; persistence is
+     one shared Room layer; the UI is Compose Multiplatform. The same shared <code>App()</code> runs on Android
+     today and is scaffolded to run on iPhone. This page explains how it all fits together.</p>
   <span class="pill">Kotlin 2.1.0</span>
   <span class="pill">Compose MP 1.7.3</span>
+  <span class="pill">Room 2.7 KMP + KSP</span>
+  <span class="pill">Koin 4.0</span>
   <span class="pill">AGP 8.7.3 · compileSdk 35</span>
   <span class="pill">Gradle 8.14 · JDK 21</span>
-  <span class="pill">targets: jvm + android</span>
+  <span class="pill">targets: android · jvm · iOS</span>
 </header>
 
 <nav>
-  <a href="#kmm">KMM wiring</a>
-  <a href="#modules">Modules</a>
-  <a href="#domain">Domain classes</a>
-  <a href="#ui">UI classes</a>
-  <a href="#app">Android app</a>
+  <a href="#what">What it does</a>
+  <a href="#kmm">Modules</a>
+  <a href="#domain">Domain</a>
+  <a href="#data">Data (Room)</a>
+  <a href="#ui">UI</a>
+  <a href="#shared">Shared app</a>
+  <a href="#hosts">Hosts</a>
   <a href="#flow">Data flow</a>
   <a href="#fixture">The 83 fixture</a>
+  <a href="#ios">iOS status</a>
 </nav>
 
+<!-- ============================ WHAT ============================ -->
+<h2 id="what">1 · What the app does</h2>
+<p class="lead">Four screens, one stateless-screen / shared-ViewModel pattern throughout.</p>
+<div class="grid c2">
+  <div class="card">
+    <h3>Library</h3>
+    <p class="muted">Browse saved templates and games. Tap <b>+</b> to author a template, “New game” to start
+       one, or a game card to resume it.</p>
+  </div>
+  <div class="card">
+    <h3>Rule builder</h3>
+    <p class="muted">Name a template, add fields (<code>COUNT</code>/<code>TRACK</code>/<code>RANKING</code>), and
+       add any of five scoring-rule types from a palette — each rendered as a plain-language line with live
+       validation.</p>
+  </div>
+  <div class="card">
+    <h3>New game</h3>
+    <p class="muted">Pick a saved template + optional scenario, name the game, add players. Start unlocks once a
+       template + name are set.</p>
+  </div>
+  <div class="card">
+    <h3>Score entry</h3>
+    <p class="muted">Steppers only (never text fields), a live running total, per-category subtotals, and a
+       cross-player ranked-goal section that resolves rank live. Every edit <b>autosaves</b>.</p>
+  </div>
+</div>
+
 <!-- ============================ KMM ============================ -->
-<h2 id="kmm">1 · How KMM is hooked up <span class="k">settings.gradle.kts · libs.versions.toml</span></h2>
-<p class="lead">Kotlin Multiplatform means one Gradle build with several <em>modules</em>, each declaring
-   one or more compile <em>targets</em>. Code shared across targets lives in a <code>commonMain</code>
-   source set and is compiled once per target. This project has three modules and a clean one-way
-   dependency chain.</p>
+<h2 id="kmm">2 · How the Multiplatform build is wired <span class="k">settings.gradle.kts · libs.versions.toml</span></h2>
+<p class="lead">Kotlin Multiplatform means one Gradle build with several <em>modules</em>, each declaring compile
+   <em>targets</em>. Shared code lives in <code>commonMain</code> and is compiled once per target. The project
+   is a clean one-way dependency chain: hosts → <code>:shared</code> → (<code>:ui</code>, <code>:data</code>) →
+   <code>:deepsea-scoring</code>. Anti-corruption layers keep distinct models per layer.</p>
 
 <div class="card">
   <div class="diagram">
     <div class="mod app">
-      <div class="h"><span class="tag t-app">:androidApp</span> Android application</div>
-      <div class="sub">com.android.application · MainActivity hosts the screen</div>
+      <div class="h"><span class="tag t-app">:androidApp</span> Android host &nbsp;·&nbsp;
+        <span class="tag t-app">iosApp</span> Xcode host</div>
+      <div class="sub">MainActivity → setContent { App() } &nbsp;/&nbsp; ContentView → MainViewController()</div>
+    </div>
+    <div class="arrow">│<br><span>depend on</span> ▼</div>
+    <div class="mod shared">
+      <div class="h"><span class="tag t-shared">:shared</span> App layer (KMP: android + iOS)</div>
+      <div class="sub">ViewModels · AppNavHost (MP Navigation) · Koin graph · App() composable</div>
     </div>
     <div class="arrow">│<br><span>depends on</span> ▼</div>
     <div class="mod ui">
-      <div class="h"><span class="tag t-ui">:ui</span> Compose Multiplatform UI library</div>
-      <div class="sub">kotlin(multiplatform) + org.jetbrains.compose · targets: androidTarget() + jvm()</div>
+      <div class="h"><span class="tag t-ui">:ui</span> Compose-Multiplatform UI &nbsp;
+        <span class="tag t-data">:data</span> Room 2.7 KMP</div>
+      <div class="sub">stateless screens + UiState reducers &nbsp;/&nbsp; entities · DAOs · DB · repo impls</div>
     </div>
-    <div class="arrow">│<br><span>depends on</span> ▼</div>
+    <div class="arrow">│<br><span>depend on</span> ▼</div>
     <div class="mod dom">
-      <div class="h"><span class="tag t-domain">:deepsea-scoring</span> Pure-Kotlin domain</div>
-      <div class="sub">kotlin(multiplatform) + serialization · targets: androidTarget() + jvm() · no UI deps</div>
+      <div class="h"><span class="tag t-domain">:deepsea-scoring</span> Pure-Kotlin domain (KMP)</div>
+      <div class="sub">models · scoring engine · repository interfaces · interactors · no UI/Android imports</div>
     </div>
   </div>
   <div class="legend">
-    <span><span class="dot" style="background:var(--app)"></span>Android-only module</span>
-    <span><span class="dot" style="background:var(--ui)"></span>Multiplatform + Compose</span>
-    <span><span class="dot" style="background:var(--domain)"></span>Multiplatform, framework-free</span>
+    <span><span class="dot" style="background:var(--app)"></span>Thin host (Android app / Xcode)</span>
+    <span><span class="dot" style="background:var(--accent)"></span>Shared app (VMs + nav + DI)</span>
+    <span><span class="dot" style="background:var(--ui)"></span>Compose UI</span>
+    <span><span class="dot" style="background:var(--data)"></span>Room data</span>
+    <span><span class="dot" style="background:var(--domain)"></span>Framework-free domain</span>
   </div>
 </div>
 
@@ -123,187 +215,198 @@
   <div class="card">
     <h3>Targets &amp; source sets</h3>
     <ul class="tight muted">
-      <li>Both library modules declare <code>jvm()</code> <b>and</b> <code>androidTarget()</code>.</li>
-      <li>The <code>jvm()</code> target is what runs the unit tests (<code>jvmTest</code>) — fast, no emulator.</li>
-      <li>The <code>androidTarget()</code> exists so <code>:ui</code>'s Android variant can resolve
-          <code>:deepsea-scoring</code> through the dependency graph. Android <em>consumes</em> the same
-          <code>commonMain</code> code.</li>
-      <li>All real code lives in <code>commonMain</code>; there is no <code>expect/actual</code> yet —
-          nothing in this project needs platform-specific implementations.</li>
-      <li><span class="muted">iOS targets are deferred</span> (no macOS/Xcode on the build host); adding
-          them later is a build-file-only change because the code is already common.</li>
+      <li>Every module targets <code>androidTarget()</code> + <code>iosX64/iosArm64/iosSimulatorArm64()</code>;
+          <code>:deepsea-scoring</code> and <code>:ui</code> also keep <code>jvm()</code> for fast unit tests.</li>
+      <li>Real code lives in <code>commonMain</code>. The only <code>expect/actual</code> seams are the Room DB
+          builder and the Koin <code>platformModule()</code> (the Context-vs-path / clock differences).</li>
+      <li>Tests: domain + UI reducers run on <code>jvm()</code>; Room round-trips run on the Android target under
+          Robolectric (<code>androidUnitTest</code>); ViewModels run as plain JVM unit tests in
+          <code>:shared</code>’s <code>commonTest</code>.</li>
+      <li><b>iOS compiles are macOS-only</b> — the targets are authored and the Android/JVM build is fully
+          verified on the (Windows) authoring host.</li>
     </ul>
   </div>
   <div class="card">
     <h3>Build wiring</h3>
     <ul class="tight muted">
-      <li><code>settings.gradle.kts</code> — includes <code>:deepsea-scoring</code>, <code>:ui</code>,
-          <code>:androidApp</code>; foojay resolver auto-provisions the JDK toolchain.</li>
-      <li><code>gradle/libs.versions.toml</code> — single version catalog for Kotlin, serialization,
-          Compose MP, AGP, activity-compose.</li>
-      <li><code>jvmToolchain(21)</code> in every module → compiled with JDK 21 (the Gradle daemon also
-          runs on JDK 21, pinned outside the repo because the host's only system JDK is 26, which
-          Gradle 8.14 rejects).</li>
-      <li><code>gradle.properties</code> — <code>android.useAndroidX=true</code>; Compose pulls AndroidX
-          on the Android variant.</li>
+      <li><code>settings.gradle.kts</code> — includes <code>:deepsea-scoring · :ui · :data · :shared ·
+          :androidApp</code>; foojay auto-provisions the JDK toolchain.</li>
+      <li><code>gradle/libs.versions.toml</code> — one version catalog (Kotlin, Compose MP, Room 2.7, Koin 4,
+          MP navigation/lifecycle, kotlinx).</li>
+      <li><code>jvmToolchain(21)</code> everywhere → compiled with JDK 21. The Gradle 8.14 daemon also needs
+          JDK 21, pinned <em>outside</em> the repo (the host’s only system JDK is too new).</li>
+      <li>DI is <b>Koin</b> (no compiler plugin / KSP) so the graph can live in <code>commonMain</code>; only the
+          platform module is per-target.</li>
     </ul>
   </div>
 </div>
 
 <div class="note">
-  <b>The product bet (Design law §3):</b> scoring is an <em>AST of dumb data + external interpreters</em>.
-  Rules carry no behaviour; every operation is a top-level <code>when</code> in the engine package. That
-  is why the domain module can stay 100% framework-free and the UI just renders it.
+  <b>The product bet (Design law §3):</b> scoring is an <em>AST of dumb data + external interpreters</em>. Rules
+  carry no behaviour; every operation is a top-level <code>when</code> in the engine. Adding a rule type is a
+  compile-error-driven change across the interpreters — that’s what lets the domain stay 100% framework-free and
+  the UI just render it.
 </div>
 
 <!-- ============================ MODULES ============================ -->
-<h2 id="modules">2 · Module responsibilities</h2>
+<h2 id="modules">3 · Module responsibilities</h2>
 <div class="grid c3">
-  <div class="card">
-    <span class="tag t-domain">:deepsea-scoring</span>
-    <p class="muted" style="margin:.7em 0 0">The model + the math. Serializable data classes and the
-      scoring interpreters. Zero Compose / Android imports in source. Tested entirely on the JVM.</p>
-  </div>
-  <div class="card">
-    <span class="tag t-ui">:ui</span>
-    <p class="muted" style="margin:.7em 0 0">Screen A in Compose Multiplatform + a state holder that
-      wraps the engine. Renders rule rows, steppers, tags, the cross-player ranked section, and the
-      live total. Depends only on the domain.</p>
-  </div>
-  <div class="card">
-    <span class="tag t-app">:androidApp</span>
-    <p class="muted" style="margin:.7em 0 0">The runnable Android shell. One <code>MainActivity</code>
-      that calls into <code>:ui</code>. No business logic.</p>
-  </div>
+  <div class="card"><span class="tag t-domain">:deepsea-scoring</span>
+    <p class="muted" style="margin:.7em 0 0">Models, the scoring engine (dumb-data rules + interpreters),
+      repository <em>interfaces</em>, and interactors (use cases). Zero Compose/Android. Tested on the JVM.</p></div>
+  <div class="card"><span class="tag t-data">:data</span>
+    <p class="muted" style="margin:.7em 0 0">One shared Room 2.7 (KMP) layer: entities, DAOs, the database,
+      entity↔domain mappers, and the Room-backed repository impls. Bundled SQLite driver.</p></div>
+  <div class="card"><span class="tag t-ui">:ui</span>
+    <p class="muted" style="margin:.7em 0 0">Compose-Multiplatform: immutable <code>UiState</code> models +
+      domain→UI reducers + <b>stateless</b> screens. Never sees Room/Android types.</p></div>
+  <div class="card"><span class="tag t-shared">:shared</span>
+    <p class="muted" style="margin:.7em 0 0">The app glue: <code>StateFlow&lt;UiState&gt;</code> ViewModels, the
+      <code>AppNavHost</code>, the Koin graph, and the <code>App()</code> composable — all multiplatform.</p></div>
+  <div class="card"><span class="tag t-app">:androidApp</span>
+    <p class="muted" style="margin:.7em 0 0">Thin Android shell: <code>MainActivity</code> (edge-to-edge,
+      <code>setContent { App() }</code>) + <code>ScoreApp</code> (<code>initKoin</code>).</p></div>
+  <div class="card"><span class="tag t-app">iosApp</span>
+    <p class="muted" style="margin:.7em 0 0">Thin SwiftUI shell wrapping <code>MainViewController()</code> in a
+      <code>UIViewControllerRepresentable</code>. Build/run on a Mac.</p></div>
 </div>
 
 <!-- ============================ DOMAIN ============================ -->
-<h2 id="domain">3 · Domain classes <span class="k">:deepsea-scoring / commonMain</span></h2>
-<p class="lead">Two packages: <code>model</code> (the AST of dumb data) and <code>engine</code> (the
-   interpreters). Plus a <code>sample</code> with the Deep Sea template.</p>
-
-<h3>package <span class="mono">model</span> — the data</h3>
+<h2 id="domain">4 · Domain <span class="k">:deepsea-scoring / commonMain</span></h2>
+<p class="lead">Packages: <code>model</code> (the AST of dumb data), <code>engine</code> (interpreters),
+   <code>repository</code> (interfaces), <code>interactors</code> (use cases), <code>sample</code> (Deep Sea).</p>
 <table>
-  <thead><tr><th>Type</th><th>File</th><th>What it is</th></tr></thead>
+  <thead><tr><th>Symbol</th><th>Package</th><th>Role</th></tr></thead>
   <tbody>
-    <tr><td><code>FieldId</code> <code>PlayerId</code> <code>RuleId</code></td><td>Ids.kt</td>
-        <td>Serializable <code>@JvmInline value class</code> wrappers over <code>String</code> — typed identity, zero runtime cost. Fields are always referenced by id, never by label.</td></tr>
-    <tr><td><code>FieldKind</code> · <code>Field</code></td><td>Field.kt</td>
-        <td><code>FieldKind = {COUNT, TRACK, RANKING}</code>; <code>Field(id, label, kind, max?)</code> describes one input.</td></tr>
-    <tr><td><code>RuleScope</code></td><td>ScoringRule.kt</td>
-        <td><code>{PER_PLAYER, TABLE}</code> — the cross-player fork. Ranking is TABLE-scoped.</td></tr>
-    <tr><td><code>ScoringRule</code> <span class="muted">(sealed)</span></td><td>ScoringRule.kt</td>
-        <td>The AST root. Only <code>id</code> is on the interface. Five leaves, each <code>@Serializable</code> with a <code>@SerialName</code> and an optional per-leaf <code>group</code> (UI section tag):
-            <ul class="tight" style="margin-top:.4em">
-              <li><code>Lookup(field, table)</code> — track value indexes a points table → <span class="mono">LOOKUP</span></li>
-              <li><code>PerUnit(field, points)</code> — points per unit → <span class="mono">×n</span></li>
-              <li><code>Flat(field)</code> — face value → <span class="mono">FLAT</span></li>
-              <li><code>PerN(field, divisor)</code> — 1 pt per N (floor) → <span class="mono">÷n</span></li>
-              <li><code>Ranking(field, awards)</code> — cross-player rank award → <span class="mono">RANK</span></li>
-            </ul></td></tr>
-    <tr><td><code>PlayerInput</code></td><td>PlayerInput.kt</td>
-        <td><code>(id, name, values: Map&lt;FieldId,Int&gt;)</code> — one player's entered numbers.</td></tr>
-    <tr><td><code>Template</code> · <code>Scenario</code></td><td>Template.kt</td>
-        <td>A template = fields + rules + optional scenarios. A scenario overlays extra fields/rules.</td></tr>
-    <tr><td><code>ResolvedTemplate</code> · <code>Template.resolve()</code></td><td>ResolvedTemplate.kt</td>
-        <td>Base + chosen scenario flattened, with a <code>labels</code> map. This is what drives the screen.</td></tr>
+    <tr><td><code>FieldId · PlayerId · RuleId · GameId</code></td><td>model</td>
+        <td>Serializable <code>value class</code> wrappers over <code>String</code> — typed identity, zero cost. Fields are referenced by id, never label.</td></tr>
+    <tr><td><code>FieldKind · Field · RuleScope</code></td><td>model</td>
+        <td><code>{COUNT,TRACK,RANKING}</code>; a field; and <code>{PER_PLAYER,TABLE}</code> — the cross-player fork.</td></tr>
+    <tr><td><code>ScoringRule</code> <span class="muted">(sealed)</span></td><td>model</td>
+        <td>The AST root; only <code>id</code> on the interface. Five <code>@Serializable</code> leaves: <code>Lookup</code> (table), <code>PerUnit</code> (×n), <code>Flat</code>, <code>PerN</code> (÷n), <code>Ranking</code> (TABLE award by rank).</td></tr>
+    <tr><td><code>Template · Scenario · ResolvedTemplate</code></td><td>model</td>
+        <td>Template = fields + rules + scenarios; <code>resolve(scenarioId)</code> flattens base + chosen scenario into what drives a game.</td></tr>
+    <tr><td><code>Game · PlayerInput</code></td><td>model</td>
+        <td>A persisted game (template + scenario + players + status) and one player’s entered numbers.</td></tr>
+    <tr><td><code>ScoringContext · Scorer · rankAward()</code></td><td>engine</td>
+        <td>Context holds the <b>whole table</b>; <code>Scorer</code> gives per-rule points, breakdown, total. <code>rankAward()</code> = award by competition rank (ties take the top award; consumed slots skipped → 8/8/0).</td></tr>
+    <tr><td><code>scope · describe · validate · groupedRules · typeTag</code></td><td>engine</td>
+        <td>Exhaustive <code>when</code>s over the sealed AST: scope, plain-language line, structural checks, section grouping, UI type tag.</td></tr>
+    <tr><td><code>TemplateRepository · GameRepository</code></td><td>repository</td>
+        <td>The persistence contracts the domain owns; implemented in <code>:data</code>. Reactive reads return <code>Flow</code>.</td></tr>
+    <tr><td><code>ObserveTemplates · GetTemplate · SaveTemplate · DeleteTemplate ·<br>ObserveGames · GetGame · CreateGame · UpdatePlayerValue · FinishGame</code></td><td>interactors</td>
+        <td>Use cases as <code>operator fun invoke</code> classes — the only thing ViewModels call.</td></tr>
+    <tr><td><code>DeepSea · DeepSeaScoringTest</code></td><td>sample / commonTest</td>
+        <td>The Deep Sea template + the golden gate: total = 83, ranked goal 8/8/0, scope, validation, JSON round-trip.</td></tr>
   </tbody>
 </table>
 
-<h3>package <span class="mono">engine</span> — the interpreters</h3>
-<p class="lead">Every operation over the sealed AST is an exhaustive <code>when</code> here — adding a rule
-   type forces a compile error at each one. Nothing lives on the rules themselves.</p>
+<!-- ============================ DATA ============================ -->
+<h2 id="data">5 · Data layer <span class="k">:data — Room 2.7 KMP</span></h2>
+<p class="lead">One multiplatform Room implementation behind the domain’s repository interfaces. The same entities,
+   DAOs, and database compile for Android and iOS; only the <em>builder</em> differs per platform.</p>
 <table>
   <thead><tr><th>Symbol</th><th>File</th><th>Role</th></tr></thead>
   <tbody>
-    <tr><td><code>ScoringContext</code></td><td>ScoringContext.kt</td>
-        <td>Holds the <b>whole table</b> — <code>(template, players)</code> — plus <code>column(field)</code>. PER_PLAYER rules read one sheet; TABLE rules need everyone.</td></tr>
-    <tr><td><code>Scorer</code> <span class="muted">(object)</span></td><td>Scorer.kt</td>
-        <td><code>score(rule, player, ctx)</code>, <code>breakdown(player, ctx): Map&lt;RuleId,Int&gt;</code>, <code>total(player, ctx)</code>. Total = sum of leaf rules.</td></tr>
-    <tr><td><code>rankAward()</code></td><td>RankAward.kt</td>
-        <td>The tie rule: award by competition rank (count of strictly-higher values). Tied top players each take the top award; consumed slots are skipped (12/12/8 with [8,4] → 8/8/0).</td></tr>
-    <tr><td><code>scope()</code> <code>referencedFields()</code> <code>group()</code> <code>typeTag()</code> <code>groupedRules()</code></td><td>Interpreters.kt</td>
-        <td>Per-rule reflection-free accessors: TABLE vs PER_PLAYER, fields touched, the section tag, the UI type tag, and grouping rules into ordered sections.</td></tr>
-    <tr><td><code>describe(labels)</code></td><td>Describe.kt</td>
-        <td>Plain-language one-liner for each rule (the readability test that justifies typed rules over formulas).</td></tr>
-    <tr><td><code>validate()</code></td><td>Validate.kt</td>
-        <td>Structural checks → list of problems (empty == valid). Enforces e.g. a TABLE rule sits on a RANKING field.</td></tr>
-  </tbody>
-</table>
-
-<h3>package <span class="mono">sample</span> + tests</h3>
-<table>
-  <tbody>
-    <tr><td><code>DeepSea</code> <span class="muted">(object)</span></td><td>sample/DeepSea.kt</td>
-        <td>Endeavor: Deep Sea as template data — field ids, the placeholder track table <code>[0,1,3,6,10,14,19,25]</code>, and scenario&nbsp;1 (the ranked goal + per-disc bonus). Each rule tagged with its section <code>group</code>.</td></tr>
-    <tr><td><code>DeepSeaScoringTest</code></td><td>commonTest/…/DeepSeaScoringTest.kt</td>
-        <td>The golden gate: total = 83, full per-rule breakdown, ranked goal 8/8/0, scope, validation, JSON round-trip. 7/7 green.</td></tr>
+    <tr><td><code>TemplateEntity · FieldEntity · RuleEntity · GameEntity · PlayerEntity · PlayerValueEntity</code></td><td>entity/Entities.kt</td>
+        <td>Room <code>@Entity</code> rows (6 tables). Rules persist their payload as JSON; scenarios as a JSON column.</td></tr>
+    <tr><td><code>TemplateDao · GameDao</code></td><td>dao/</td>
+        <td>Reactive multi-table <code>Flow</code> queries + <code>@Transaction</code> methods for atomic composite writes (save template, insert game).</td></tr>
+    <tr><td><code>AppDatabase</code> + <code>AppDatabaseConstructor</code></td><td>AppDatabase.kt</td>
+        <td><code>@Database</code> + <code>@ConstructedBy</code> with an <code>expect object : RoomDatabaseConstructor</code>; Room KSP generates the platform <code>actual</code> on each target.</td></tr>
+    <tr><td><code>buildAppDatabase() · appDatabase(context) · appDatabase()</code></td><td>DatabaseFactory.kt + android/iosMain</td>
+        <td>Shared config sets the <b>BundledSQLiteDriver</b> + query context; the Android factory takes a Context, the iOS factory uses the Documents directory.</td></tr>
+    <tr><td><code>templateFrom/toEntities · gameFrom/toEntities · RuleJson</code></td><td>mapper/</td>
+        <td>Anti-corruption mappers between Room rows and domain models; <code>ScoringRule</code> ↔ JSON.</td></tr>
+    <tr><td><code>RoomTemplateRepository · RoomGameRepository</code></td><td>repository/</td>
+        <td>Implement the domain interfaces; combine sub-table Flows so reads re-emit on any related write. The wall clock is injected (commonMain has no <code>System.currentTimeMillis</code>).</td></tr>
   </tbody>
 </table>
 
 <!-- ============================ UI ============================ -->
-<h2 id="ui">4 · UI classes <span class="k">:ui / commonMain</span></h2>
-<p class="lead">A state holder wraps the engine; composables render it. The domain module is never touched —
-   the UI only orchestrates it. Numeric input is steppers, never text fields.</p>
+<h2 id="ui">6 · UI <span class="k">:ui / commonMain</span></h2>
+<p class="lead">Stateless screens + pure reducers. A screen takes an immutable <code>UiState</code> and emits
+   callbacks; it never touches the domain engine directly. Numeric input is steppers, never text fields.</p>
 <table>
   <thead><tr><th>Symbol</th><th>File</th><th>Role</th></tr></thead>
   <tbody>
-    <tr><td><code>ScoreEntryState</code> <span class="muted">("ViewModel")</span></td><td>ScoreEntryState.kt</td>
-        <td>Wraps a <code>ScoringContext</code> in Compose snapshot state. Holds the whole player table + the active player; mutates via <code>increment</code>/<code>decrement</code>/<code>setValue</code> (clamped); derives <code>total</code>, <code>breakdown</code>, <code>categoryBreakdown()</code>, and <code>sections()</code> live.</td></tr>
-    <tr><td><code>Section</code> <span class="muted">(sealed)</span></td><td>ScoreEntryState.kt</td>
-        <td><code>PerPlayer</code> (single-input rows on the active sheet) vs <code>Ranked</code> (a cross-player matrix). A group becomes <code>Ranked</code> if it contains any TABLE rule.</td></tr>
-    <tr><td><code>RuleRow</code> · <code>RankedColumn</code> · <code>RankedRow</code></td><td>ScoreEntryState.kt</td>
-        <td>Plain render models: label, type tag, value, live points; and per-player rows for the ranked section.</td></tr>
-    <tr><td><code>ScoreEntryScreen()</code> + privates</td><td>ScreenA.kt</td>
-        <td>The composable screen: player tabs, a <code>LazyColumn</code> of section cards, each rule row = label · <code>Stepper(−/value/+)</code> · live points · type-tag chip, and a footer with the running total + per-category breakdown.</td></tr>
-    <tr><td><code>DeepSeaScreenA()</code> · <code>deepSeaSampleState()</code></td><td>DeepSeaScreenA.kt</td>
-        <td>Themed, self-contained entry point pre-loaded with the §5 fixture (opens at 83). The single function platform apps call.</td></tr>
-    <tr><td><code>ScoreEntryStateTest</code></td><td>commonTest/…/ScoreEntryStateTest.kt</td>
-        <td>UI-layer acceptance: drives the fixture through the holder → total 83, ranked goal 8/8/0, steppers update/clamp. 5/5 green.</td></tr>
+    <tr><td><code>LibraryScreen · LibraryUiState</code></td><td>screens/ · model/</td>
+        <td>Template + game lists; callbacks for open/resume/new.</td></tr>
+    <tr><td><code>RuleBuilderScreen · RuleBuilderUiState</code></td><td>screens/ · model/</td>
+        <td>The authoring screen + the 5-type rule palette and pure template-edit helpers (describe/validate).</td></tr>
+    <tr><td><code>NewGameScreen · NewGameUiState</code></td><td>screens/ · model/</td>
+        <td>Template/scenario pickers, player list, and the <code>canStart</code> gate.</td></tr>
+    <tr><td><code>ScoreEntryScreen · scoreEntryUiState()</code></td><td>ScreenA.kt · model/ScoreEntryUiState.kt</td>
+        <td>Player tabs, a <code>LazyColumn</code> of section cards (rule row = label · <code>Stepper(−/value/+)</code> · live points · type chip), running total + per-category footer. The pure reducer derives all of it from <code>(template, players, active)</code>.</td></tr>
+    <tr><td><code>Section · RuleRow · RankedColumn · RankedRow</code></td><td>model/ScoreEntryUiState.kt</td>
+        <td>Render models: <code>PerPlayer</code> rows vs a cross-player <code>Ranked</code> matrix (a group is Ranked if it holds any TABLE rule).</td></tr>
+    <tr><td><code>ScoreEntryStateTest</code></td><td>commonTest/</td>
+        <td>Drives the §5 fixture through the reducer → total 83, ranked goal 8/8/0, steppers clamp.</td></tr>
   </tbody>
 </table>
 
-<!-- ============================ APP ============================ -->
-<h2 id="app">5 · Android app <span class="k">:androidApp / src/main</span></h2>
+<!-- ============================ SHARED ============================ -->
+<h2 id="shared">7 · Shared app layer <span class="k">:shared / commonMain</span></h2>
+<p class="lead">Everything stateful and wired — ViewModels, navigation, DI — lives here so both hosts reuse it.</p>
+<table>
+  <thead><tr><th>Symbol</th><th>File</th><th>Role</th></tr></thead>
+  <tbody>
+    <tr><td><code>LibraryViewModel · RuleBuilderViewModel · NewGameViewModel · ScoreEntryViewModel</code></td><td>viewmodel/</td>
+        <td>Multiplatform <code>ViewModel</code>s exposing <code>StateFlow&lt;UiState&gt;</code>. They call interactors, map to UiState via the pure reducers, and autosave edits (score entry clamps to <code>0..max</code> and writes through <code>UpdatePlayerValue</code>).</td></tr>
+    <tr><td><code>AppNavHost · Routes</code></td><td>nav/AppNavHost.kt</td>
+        <td>JetBrains MP Navigation. Per-route Scaffold/TopAppBar; routes for Home (+ → builder, “New game”), rule builder (<code>?templateId=</code>), new game, and score entry (<code>/{gameId}</code>). VMs resolved via <code>koinViewModel { parametersOf(...) }</code>.</td></tr>
+    <tr><td><code>sharedModule · platformModule() · initKoin()</code></td><td>di/Koin.kt (+ android/ios)</td>
+        <td>The Koin graph, split: <code>sharedModule</code> wires repos/interactors/viewModels; <code>expect fun platformModule()</code> provides the <code>AppDatabase</code> + the <code>() -&gt; Long</code> clock (Android: Context + <code>System.currentTimeMillis</code>; iOS: Documents path + <code>NSDate</code>).</td></tr>
+    <tr><td><code>App()</code></td><td>App.kt</td>
+        <td>Wraps <code>AppNavHost</code> in <code>MaterialTheme</code> + Koin’s <code>KoinContext</code> so <code>koinViewModel()</code> resolves. The single composable both hosts render.</td></tr>
+    <tr><td><code>MainViewController()</code></td><td>iosMain/MainViewController.kt</td>
+        <td>iOS entry: <code>ComposeUIViewController { App() }</code>, starting Koin once. The Android counterpart of MainActivity.</td></tr>
+    <tr><td><code>AppModuleTest · ViewModel tests</code></td><td>androidUnitTest · commonTest</td>
+        <td>Koin <code>verify()</code> of the split graph; VM tests over fake repositories.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================ HOSTS ============================ -->
+<h2 id="hosts">8 · The thin hosts</h2>
 <div class="grid c2">
   <div class="card">
-    <h3><code>MainActivity</code> <span class="muted">— MainActivity.kt</span></h3>
-    <p class="muted">A <code>ComponentActivity</code> whose <code>onCreate</code> calls
-       <code>setContent { DeepSeaScreenA() }</code>. That's the entire app: it hosts the
-       <code>:ui</code> composable. Launching shows Screen A at total 83.</p>
+    <h3><span class="tag t-app">:androidApp</span></h3>
+    <p class="muted"><code>ScoreApp : Application</code> calls <code>initKoin { androidContext(this) }</code>;
+       <code>MainActivity</code> does <code>enableEdgeToEdge()</code> + <code>setContent { App() }</code>.
+       <code>applicationId com.example.boardgamescore</code>, minSdk 24 / sdk 35. No business logic.</p>
   </div>
   <div class="card">
-    <h3>Build &amp; manifest</h3>
-    <ul class="tight muted">
-      <li><code>build.gradle.kts</code> — <code>com.android.application</code> + Kotlin Android + Compose;
-          <code>applicationId com.example.boardgamescore</code>, minSdk 24, compileSdk/targetSdk 35.</li>
-      <li><code>AndroidManifest.xml</code> — one launcher activity, platform Material theme.</li>
-      <li><code>./gradlew :androidApp:assembleDebug</code> → a debug APK.</li>
-    </ul>
+    <h3><span class="tag t-app">iosApp</span> <span class="muted">(macOS to build)</span></h3>
+    <p class="muted">A SwiftUI <code>@main</code> app whose <code>ContentView</code> wraps
+       <code>MainViewControllerKt.MainViewController()</code>. The Xcode project’s “Compile Kotlin Framework”
+       phase runs <code>:shared:embedAndSignAppleFrameworkForXcode</code> to embed the <code>Shared</code>
+       framework. See <code>iosApp/README.md</code>.</p>
   </div>
 </div>
 
 <!-- ============================ FLOW ============================ -->
-<h2 id="flow">6 · Data flow (one stepper tap)</h2>
+<h2 id="flow">9 · Data flow (one stepper tap)</h2>
 <div class="card flow">
   <b>user taps +</b> on a rule row<br>
   &nbsp;&nbsp;▼<br>
-  <b>ScoreEntryState.increment(field)</b> → rebuilds the active <b>PlayerInput</b> (value clamped to <code>field.max</code>)<br>
-  &nbsp;&nbsp;▼ &nbsp;<span>Compose snapshot state changes → recomposition</span><br>
-  <b>sections()</b> / <b>total</b> / <b>breakdown</b> recompute via <b>Scorer</b> over a fresh <b>ScoringContext(template, players)</b><br>
+  <b>ScoreEntryViewModel.onIncrement(field, player)</b> → clamps to <code>0..field.max</code>, updates local
+  <b>StateFlow&lt;List&lt;PlayerInput&gt;&gt;</b>, and calls <b>UpdatePlayerValue</b> (autosave)<br>
+  &nbsp;&nbsp;▼ &nbsp;<span>interactor → GameRepository → Room <code>@Transaction</code> write</span><br>
+  <b>uiState</b> = <b>scoreEntryUiState(resolved, players, active)</b> recomputes via <b>Scorer</b> over a fresh
+  <b>ScoringContext</b><br>
   &nbsp;&nbsp;▼<br>
   per-player rules read one sheet · <b>Ranking</b> reads <code>ctx.column(field)</code> across <b>all</b> players → <b>rankAward()</b><br>
   &nbsp;&nbsp;▼<br>
-  <b>ScreenA</b> redraws: row points, footer total, and the cross-player ranked matrix — all live
+  <b>StateFlow</b> emits → <b>ScoreEntryScreen</b> redraws: row points, footer total, the ranked matrix — all live
 </div>
-<div class="note">The <b>cross-player fork</b> is the interesting bit: the ranked goal can't be scored from one
-  player's sheet, so the state holder keeps the entire table and the <code>Ranking</code> interpreter
-  resolves rank from everyone's column at once.</div>
+<div class="note">The <b>cross-player fork</b> is the interesting bit: a ranked goal can’t be scored from one player’s
+  sheet, so the reducer keeps the whole table and the <code>Ranking</code> interpreter resolves rank from
+  everyone’s column at once. The reducer is pure, so the demo, the holder test, and production all share it.</div>
 
 <!-- ============================ FIXTURE ============================ -->
-<h2 id="fixture">7 · The §5 fixture → 83</h2>
-<p class="lead">Player "You" against the Deep Sea scenario-1 template. Mira &amp; You tie at the top of the
-   ranked goal (12 discs); Kane trails (8), so second place is skipped.</p>
+<h2 id="fixture">10 · The §5 fixture → 83 <span class="k">the regression anchor</span></h2>
+<p class="lead">Player “You” against the Deep Sea scenario-1 template. Mira &amp; You tie at the top of the ranked
+   goal (12 discs); Kane trails (8), so second place is skipped. Treat any change to these numbers as a regression.</p>
 <table>
   <thead><tr><th>Rule</th><th>Type</th><th>Input</th><th>Points</th></tr></thead>
   <tbody>
@@ -321,15 +424,40 @@
     <tr><td><b>Total</b></td><td></td><td></td><td><b>83</b></td></tr>
   </tbody>
 </table>
-<div class="note warn"><b>Placeholder:</b> the attribute track table <code>[0,1,3,6,10,14,19,25]</code> is a
-  stand-in — confirm the real thresholds from the rulebook before treating scores as authoritative.</div>
+<div class="note warn"><b>Placeholder:</b> the attribute track table <code>[0,1,3,6,10,14,19,25]</code> is a stand-in —
+  confirm the real thresholds from the rulebook before treating scores as authoritative.</div>
+
+<!-- ============================ iOS ============================ -->
+<h2 id="ios">11 · iOS status</h2>
+<div class="note ok">
+  <b>Scaffolded, Android-verified, iOS-pending.</b> All five increments (I1–I5) are authored: iOS targets on
+  every module, one shared Room 2.7 KMP data layer, the ViewModels/NavHost/Koin graph + <code>App()</code> in
+  <code>:shared</code>, a <code>MainViewController()</code> Compose entry point, and the <code>iosApp</code> Xcode
+  project. Because Kotlin/Native + Xcode are <b>macOS-only</b>, the iOS compile/link is not yet verified — but the
+  Android app and all JVM tests pass after every increment (83 / 8-8-0 holds). Next recommended step: a macOS CI
+  runner so iOS compilation is checked continuously. Build steps live in <code>iosApp/README.md</code>; the
+  sequenced plan is in <code>docs/superpowers/plans/2026-06-28-ios-xcode-target.md</code>.
+</div>
 
 <footer>
-  Generated as a static, self-contained explainer for the boardgame-score-kmm repo. Open it in any
-  browser — no external assets. &nbsp;·&nbsp; Source of truth: the modules under
-  <span class="mono">deepsea-scoring/</span>, <span class="mono">ui/</span>, <span class="mono">androidApp/</span>.
+  Static, self-contained explainer for the boardgame-score-kmm repo — open in any browser, no external assets.
+  Toggle <span class="kbd">☀️ / 🌙</span> top-right (remembers your choice; defaults to your system theme).
+  &nbsp;·&nbsp; Source of truth: the modules under <span class="mono">deepsea-scoring/ · data/ · ui/ · shared/ ·
+  androidApp/ · iosApp/</span>.
 </footer>
 
 </div>
+
+<script>
+  (function () {
+    var btn = document.getElementById("themeToggle");
+    btn.addEventListener("click", function () {
+      var cur = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+      var next = cur === "light" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("bgs-theme", next); } catch (e) {}
+    });
+  })();
+</script>
 </body>
 </html>
