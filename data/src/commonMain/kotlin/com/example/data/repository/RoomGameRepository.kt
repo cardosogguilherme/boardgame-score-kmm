@@ -14,9 +14,11 @@ import com.example.scoring.repository.GameRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
+// `now` is injected (no default) because the wall clock is platform-specific — commonMain has no
+// `System.currentTimeMillis`. The platform Koin module supplies it (Android: System.currentTimeMillis).
 class RoomGameRepository(
     private val dao: GameDao,
-    private val now: () -> Long = System::currentTimeMillis,
+    private val now: () -> Long,
 ) : GameRepository {
     override fun observeGames(): Flow<List<Game>> =
         combine(

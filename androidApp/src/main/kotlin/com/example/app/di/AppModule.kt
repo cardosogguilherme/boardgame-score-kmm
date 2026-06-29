@@ -1,7 +1,7 @@
 package com.example.app.di
 
-import androidx.room.Room
 import com.example.data.AppDatabase
+import com.example.data.appDatabase
 import com.example.data.repository.RoomGameRepository
 import com.example.data.repository.RoomTemplateRepository
 import com.example.scoring.interactors.CreateGame
@@ -35,15 +35,13 @@ import org.koin.dsl.module
  * domain interactors, and the screen ViewModels (Task 10).
  */
 val appModule = module {
-    // Database — one instance for the whole app lifetime
-    single {
-        Room.databaseBuilder(androidContext(), AppDatabase::class.java, "boardgame-score.db")
-            .build()
-    }
+    // Database — one instance for the whole app lifetime. Built by the :data Android factory
+    // (Room 2.7 KMP + bundled SQLite driver); the iOS module will bind appDatabase() instead.
+    single { appDatabase(androidContext()) }
 
     // Repositories — bound as their domain interfaces so screens stay framework-free
     single<TemplateRepository> { RoomTemplateRepository(get<AppDatabase>().templateDao()) }
-    single<GameRepository> { RoomGameRepository(get<AppDatabase>().gameDao()) }
+    single<GameRepository> { RoomGameRepository(get<AppDatabase>().gameDao(), now = System::currentTimeMillis) }
 
     // Template interactors
     factory { ObserveTemplates(get()) }
