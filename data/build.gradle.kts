@@ -21,7 +21,9 @@ kotlin {
             implementation(project(":deepsea-scoring"))
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.androidx.room.runtime)
+            // api: AppDatabase (a RoomDatabase) and its DAOs are part of :data's public surface —
+            // :shared's Koin graph resolves them — so RoomDatabase must be visible to consumers.
+            api(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
         }
         commonTest.dependencies {

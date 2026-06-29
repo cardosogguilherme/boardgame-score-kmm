@@ -26,7 +26,7 @@ import com.example.ui.ScoreEntryScreen
 import com.example.ui.screens.LibraryScreen
 import com.example.ui.screens.NewGameScreen
 import com.example.ui.screens.RuleBuilderScreen
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 object Routes {
