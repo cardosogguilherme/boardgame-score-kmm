@@ -10,10 +10,15 @@ kotlin {
 
     androidTarget()
     // iOS: this module hosts the ViewModels + NavHost + Koin graph + App() composable, so the whole
-    // app runs from commonMain on iPhone. Linking is macOS-only; the Android build is unaffected.
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    // app runs from commonMain on iPhone. Each iOS target exports a static "Shared" framework that
+    // the Xcode project (iosApp) embeds via embedAndSignAppleFrameworkForXcode. Linking is
+    // macOS-only; the Android build is unaffected.
+    listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {
