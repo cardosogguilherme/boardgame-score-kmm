@@ -10,7 +10,12 @@ kotlin {
 
     androidTarget()
     jvm()
-    // iOS targets deferred (no macOS on this host). All Screen A code lives in commonMain.
+    // iOS: all screens are stateless Compose Multiplatform in commonMain, so they compile for Apple
+    // targets unchanged once the targets exist. Linking is macOS-only; the Android/JVM build is
+    // unaffected (iOS compile tasks don't run in those task graphs).
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
 
     sourceSets {
         commonMain.dependencies {

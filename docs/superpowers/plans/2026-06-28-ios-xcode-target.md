@@ -5,6 +5,19 @@
 Compose Multiplatform, hosted by an `iosApp` Xcode project embedding a `ComposeUIViewController`;
 persistence via **Room KMP (2.7+)** as one shared data layer.
 
+## Status (executed 2026-06-29, branch `feat/ios-target`)
+All five increments are **authored**; everything that can be checked off a Mac is **verified on
+Windows** (Android app + JVM tests green, 83/8-8-0 holds after every increment). iOS compile/link is
+macOS-only and **not yet verified**.
+- **I0/I1** ✅ done — iOS targets on `:deepsea-scoring`; Room 2.7.1 + MP catalog entries. *[Win-verified]*
+- **I2** ✅ done — `:data` is one shared Room 2.7 KMP module (`@ConstructedBy`, bundled SQLite,
+  platform DB builders). *[Android-verified; iOS Mac-only]*
+- **I3** ✅ done — `:shared` module holds the ViewModels + AppNavHost + Koin graph + `App()`;
+  `:androidApp` is a thin host. *[Android-verified]*
+- **I4** ✅ done — iOS targets on `:ui`; `Shared` framework export; `MainViewController()`. *[Android-verified; iOS Mac-only]*
+- **I5** ✅ authored — `iosApp` Xcode/SwiftUI project + framework-embed Run Script. *[Mac-only — unverified]*
+- **macOS CI (I1 rec.)** ⬜ not added — recommended next step so iOS compilation is verified continuously.
+
 ## ⚠️ Hard constraint: iOS builds require macOS
 Kotlin/Native iOS compilation and Xcode are **macOS-only**. This repo's current host is Windows 11
 (the module build files literally note *"iOS targets deferred — no macOS on this host"*). Therefore:

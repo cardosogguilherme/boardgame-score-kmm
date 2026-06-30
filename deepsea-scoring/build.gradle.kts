@@ -9,7 +9,12 @@ kotlin {
 
     androidTarget()
     jvm()
-    // iOS targets remain deferred (no macOS/Xcode on this host).
+    // iOS targets: the domain is pure Kotlin (serialization + coroutines, both KMP), so it compiles
+    // for Apple targets unchanged. Linking the iOS frameworks is macOS-only; on a non-Mac host these
+    // targets configure fine and the Android/JVM builds are unaffected.
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
 
     sourceSets {
         commonMain.dependencies {
