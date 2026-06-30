@@ -1,5 +1,5 @@
 // Fill these in on the Mac before building (or set them in Xcode's Signing & Capabilities).
 APP_NAME = BoardGameScore
-BUNDLE_ID = com.example.boardgamescore
+BUNDLE_ID = com.cardosogui.boardgamescore
 // Your Apple Developer Team ID (Xcode > Settings > Accounts). Leave blank for a simulator-only build.
 TEAM_ID =

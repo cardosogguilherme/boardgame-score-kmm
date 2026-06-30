@@ -24,5 +24,5 @@ fun appDatabase(): AppDatabase {
     val path = requireNotNull(documents.URLByAppendingPathComponent(DB_FILE_NAME)?.path) {
         "Could not build the database file path"
     }
-    return Room.databaseBuilder<AppDatabase>(name = path).buildAppDatabase(Dispatchers.IO)
+    return Room.databaseBuilder<AppDatabase>(name = path).buildAppDatabase(Dispatchers.Default)
 }

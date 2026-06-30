@@ -5,6 +5,7 @@ import com.example.data.appDatabase
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import platform.Foundation.NSDate
+import platform.Foundation.timeIntervalSince1970
 
 /** iOS platform bindings: the Room database (file-backed) and the system wall clock. Mac-only. */
 actual fun platformModule(): Module = module {
